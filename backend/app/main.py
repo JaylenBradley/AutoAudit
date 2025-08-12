@@ -4,7 +4,8 @@ import firebase_admin
 from firebase_admin import credentials
 import os
 from dotenv import load_dotenv
-from app.core.database import Base, engine
+from app.core import Base, engine
+from app.api import user_router
 
 load_dotenv()
 
@@ -28,6 +29,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(user_router, prefix="/api", tags=["Users"])
 
 @app.on_event("startup")
 def on_startup():
