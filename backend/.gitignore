@@ -1,2 +1,33 @@
-env
+# Virtual environment
+env/
+venv/
 .env
+.venv/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+
+# Firebase credentials
+app/*.json
+app/autoaudit-50103-firebase-adminsdk-fbsvc-b6fc5c3bb4.json
+
+# Database
+*.sqlite3
+*.db
+
+# Alembic specific files to ignore
+migrations/__pycache__/
+migrations/versions/__pycache__/
+
+# IDE specific files
+.idea/
+.vscode/
+.DS_Store
+
+# Logs
+logs/
+*.log
