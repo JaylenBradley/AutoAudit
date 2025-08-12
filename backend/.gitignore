@@ -30,4 +30,6 @@ migrations/versions/__pycache__/
 
 # Logs
 logs/
-*.log
+*.log__pycache__/
+*.py[cod]
+*.class
