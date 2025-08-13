@@ -1,4 +1,3 @@
-import json
 import csv
 from io import StringIO
 from sqlalchemy.orm import Session
@@ -123,7 +122,7 @@ def check_expense_against_policies(expense_data, policies):
             continue
 
         rule_type = policy.rule_type
-        rule_value = json.loads(policy.rule_value)
+        rule_value = policy.rule_value
 
         if rule_type == "amount_max" and expense_data["amount"] > rule_value:
             is_flagged = True

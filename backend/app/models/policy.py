@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, DateTime, Enum
+from sqlalchemy import Column, String, Integer, DateTime, Enum, JSON
 from sqlalchemy.sql import func
 import enum
 from app.core import Base
@@ -16,7 +16,7 @@ class Policy(Base):
     description = Column(String, nullable=True)
     category = Column(Enum(CategoryEnum))
     rule_type = Column(String)  # e.g., "amount_max", "merchant_blacklist", "item_type"
-    rule_value = Column(String)  # JSON string for complex rules or simple value
+    rule_value = Column(JSON) # rule_value will be a number for "amount_max" rules or a list for "merchant_blacklist" rules
     policy_type = Column(Enum(PolicyType))
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
