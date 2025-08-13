@@ -28,8 +28,8 @@ def create_user_route(data: UserCreate, db: Session = Depends(get_db)):
         raise HTTPException(status_code=409, detail="User already exists")
 
 @router.get("/users", response_model=list[UserResponse])
-def get_users_route(db: Session = Depends(get_db)):
-    users = get_users(db)
+def get_users_route(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    users = get_users(db, skip, limit)
 
     if not users:
         raise HTTPException(status_code=404, detail="There are no users")

@@ -1,6 +1,5 @@
-from sqlalchemy import Column, String, Integer, Float, DateTime, Boolean, ForeignKey, Enum
+from sqlalchemy import Column, String, Integer, DateTime, Enum
 from sqlalchemy.sql import func
-from sqlalchemy.orm import relationship
 import enum
 from app.core import Base
 from app.models.expense import CategoryEnum

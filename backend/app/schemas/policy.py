@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import Optional, Any, Union
+from typing import Optional
 from enum import Enum
 from app.schemas.expense import CategoryEnum
 
