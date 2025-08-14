@@ -6,6 +6,11 @@ from enum import Enum
 class CategoryEnum(str, Enum):
     GENERAL = "general"
     TRAVEL = "travel"
+    FOOD = "food"
+    LODGING = "lodging"
+    TRANSPORTATION = "transportation"
+    SUPPLIES = "supplies"
+    OTHER = "other"
 
 class ExpenseBase(BaseModel):
     merchant: str
