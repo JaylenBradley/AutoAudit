@@ -11,14 +11,25 @@
 }
 
 body {
-  background-color: var(--background);
-  /*@apply bg-gradient-to-b from-accent to-muted*/
+  @apply bg-gradient-to-br from-primary/40 via-background to-primary/40
 }
+
+.dark body {
+  @apply bg-gradient-to-br from-background via-primary/70 to-background
+}
+
+input,
+textarea,
+select {
+  color: var(--text);
+  background-color: var(--secondary);
+}
+
 
 :root {
   --background: oklch(98.89% 0.004 286.33);
   --primary: oklch(42.72% 0.239 271.91);
-  --secondary: oklch(97.55% 0.005 258.32);
+  --secondary: oklch(96% 0.03 270);
   --accent: oklch(54.04% 0.092 195.74);
   --text: oklch(32.11% 0.000 89.88);
   --muted: oklch(10.11% 0.000 89.88);
@@ -27,7 +38,7 @@ body {
 .dark {
   --background: oklch(7.30% 0.018 280.91);
   --primary: oklch(45.61% 0.240 273.72);
-  --secondary: oklch(12.71% 0.009 253.66);
+  --secondary: oklch(17% 0.04 270);
   --accent: oklch(92.78% 0.113 195.38);
   --text: oklch(84.52% 0.000 89.88);
   --muted: oklch(100% 0.000 89.88);

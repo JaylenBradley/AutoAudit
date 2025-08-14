@@ -4,7 +4,8 @@ from sqlalchemy import pool
 from alembic import context
 import os
 from dotenv import load_dotenv
-from app.core import Base, engine
+from app.core.database import Base, engine
+from app.models import user, company, expense, policy
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

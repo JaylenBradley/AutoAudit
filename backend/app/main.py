@@ -5,7 +5,7 @@ from firebase_admin import credentials
 import os
 from dotenv import load_dotenv
 from app.core import Base, engine
-from app.api import expense_router, policy_router, user_router
+from app.api import company_router, expense_router, policy_router, user_router
 
 load_dotenv()
 
@@ -30,6 +30,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+app.include_router(company_router, prefix="/api", tags=["Companies"])
 app.include_router(expense_router, prefix="/api", tags=["Expenses"])
 app.include_router(policy_router, prefix="/api", tags=["Policies"])
 app.include_router(user_router, prefix="/api", tags=["Users"])

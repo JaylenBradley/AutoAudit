@@ -1,14 +1,28 @@
-// src/components/Header.jsx
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import ThemeToggle from './ThemeToggle';
 import logo from '../assets/images/AutoAudit_logo.png';
+import { useAuth } from '../context/AuthContext';
+import { getAuth } from 'firebase/auth';
+import { app } from '../services/firebase';
+import { useNavigate } from "react-router-dom";
+
+const auth = getAuth(app);
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { currentUser, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    if (window.confirm("Are you sure you want to logout?")) {
+      auth.signOut();
+      navigate('/login')
+    }
+  };
 
   return (
-    <header className="bg-secondary shadow-md">
+    <header className="bg-background shadow-md">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link to="/" className="flex items-center gap-2">
           <img src={logo} alt="AutoAudit Logo" className="h-10 w-auto" />
@@ -16,7 +30,6 @@ const Header = () => {
         </Link>
 
         <div className="flex items-center gap-4">
-
           {/* Mobile menu button */}
           <button
             className="md:hidden text-text"
@@ -34,7 +47,20 @@ const Header = () => {
           <Link to="/expenses" className="text-text hover:text-primary transition-colors">Expenses</Link>
           <Link to="/policies" className="text-text hover:text-primary transition-colors">Policies</Link>
           <Link to="/dashboard" className="text-text hover:text-primary transition-colors">Dashboard</Link>
-          <Link to="/login" className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors">Login</Link>
+
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors cursor-pointer"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors">
+              Login
+            </Link>
+          )}
+
           <ThemeToggle />
         </nav>
       </div>
@@ -46,7 +72,19 @@ const Header = () => {
           <Link to="/expenses" className="text-text hover:text-primary py-2 transition-colors">Expenses</Link>
           <Link to="/policies" className="text-text hover:text-primary py-2 transition-colors">Policies</Link>
           <Link to="/dashboard" className="text-text hover:text-primary py-2 transition-colors">Dashboard</Link>
-          <Link to="/login" className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors">Login</Link>
+
+          {isAuthenticated ? (
+            <button
+              onClick={handleLogout}
+              className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
+            >
+              Logout
+            </button>
+          ) : (
+            <Link to="/login" className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors">
+              Login
+            </Link>
+          )}
         </nav>
       )}
     </header>

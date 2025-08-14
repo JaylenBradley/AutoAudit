@@ -4,13 +4,13 @@ const Footer = () => {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-secondary mt-auto">
+    <footer className="bg-background mt-auto">
       <div className="container mx-auto px-4 py-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div>
             <h3 className="text-lg font-semibold text-primary mb-3">AutoAudit</h3>
             <p className="text-text text-sm">
-              Streamline expense management with AI-powered auditing and policy enforcement.
+              Streamline expense management with AI-powered auditing and policy enforcement
             </p>
           </div>
 
