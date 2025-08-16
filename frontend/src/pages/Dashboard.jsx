@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import {getUserByFirebaseId, getUserById} from '../services/userServices';
 import { getUserExpenses, getUserFlaggedExpenses } from '../services/expenseServices';
 import { getCompanyById, getCompanyUsers, getCompanyExpenses } from '../services/companyServices';
 import { useNavigate } from 'react-router-dom';
-import { FiDollarSign, FiAlertTriangle, FiUsers, FiTrendingUp } from 'react-icons/fi';
+import AdminDashboard from '../components/AdminDashboard';
+import EmployeeDashboard from '../components/EmployeeDashboard';
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
-  const [userData, setUserData] = useState(null);
   const [companyData, setCompanyData] = useState(null);
   const [companyUsers, setCompanyUsers] = useState([]);
   const [companyExpenses, setCompanyExpenses] = useState([]);
@@ -17,45 +16,122 @@ const Dashboard = () => {
   const [flaggedExpenses, setFlaggedExpenses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [lastFetched, setLastFetched] = useState(null);
 
-  useEffect(() => {
-    if (!currentUser) {
-      navigate('/login');
-      return;
-    }
+  // Function to load data from cache
+  const loadFromCache = () => {
+    try {
+      const cachedData = localStorage.getItem(`expenses_cache_${currentUser.id}`);
+      if (cachedData) {
+        const {
+          timestamp,
+          expenses: cachedExpenses,
+          flaggedExpenses: cachedFlagged,
+          companyData: cachedCompanyData,
+          companyUsers: cachedCompanyUsers,
+          companyExpenses: cachedCompanyExpenses
+        } = JSON.parse(cachedData);
 
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const user = await getUserById(currentUser.id);
-        setUserData(user);
-
-        const userExpenses = await getUserExpenses(user.id);
-        setExpenses(userExpenses);
-
-        const flagged = await getUserFlaggedExpenses(user.id);
-        setFlaggedExpenses(flagged);
-
-        if (user.company_id && (user.role === 'admin' || user.role === 'manager')) {
-          const company = await getCompanyById(user.company_id);
-          setCompanyData(company);
-
-          const users = await getCompanyUsers(user.company_id);
-          setCompanyUsers(users);
-
-          const allCompanyExpenses = await getCompanyExpenses(user.company_id);
-          setCompanyExpenses(allCompanyExpenses);
+        // Check if cache is still valid (30 minutes)
+        const now = new Date().getTime();
+        if (now - timestamp < 30 * 60 * 1000) {
+          setExpenses(cachedExpenses);
+          setFlaggedExpenses(cachedFlagged);
+          if (cachedCompanyData) setCompanyData(cachedCompanyData);
+          if (cachedCompanyUsers) setCompanyUsers(cachedCompanyUsers);
+          if (cachedCompanyExpenses) setCompanyExpenses(cachedCompanyExpenses);
+          setLastFetched(timestamp);
+          return true;
         }
-      } catch (err) {
-        console.error("Error fetching dashboard data:", err);
-        setError("Failed to load dashboard data. Please try again later.");
-      } finally {
-        setIsLoading(false);
       }
-    };
+      return false;
+    } catch (err) {
+      console.error("Error loading from cache:", err);
+      return false;
+    }
+  };
 
-    fetchData();
-  }, [currentUser, navigate]);
+  // Function to save data to cache
+  const saveToCache = (data) => {
+    try {
+      const timestamp = new Date().getTime();
+      const cacheData = {
+        timestamp,
+        expenses: data.expenses || expenses,
+        flaggedExpenses: data.flaggedExpenses || flaggedExpenses,
+        companyData: data.companyData || companyData,
+        companyUsers: data.companyUsers || companyUsers,
+        companyExpenses: data.companyExpenses || companyExpenses
+      };
+
+      localStorage.setItem(`expenses_cache_${currentUser.id}`, JSON.stringify(cacheData));
+      setLastFetched(timestamp);
+    } catch (err) {
+      console.error("Error saving to cache:", err);
+    }
+  };
+
+  // Function to fetch fresh data
+  const fetchFreshData = async (forceFetch = false) => {
+    try {
+      setIsLoading(true);
+
+      // If not forcing fetch, try to load from cache first
+      if (!forceFetch && loadFromCache()) {
+        setIsLoading(false);
+        return;
+      }
+
+      const userExpenses = await getUserExpenses(currentUser.id);
+      const flagged = await getUserFlaggedExpenses(currentUser.id);
+
+      let fetchedData = {
+        expenses: userExpenses,
+        flaggedExpenses: flagged
+      };
+
+      setExpenses(userExpenses);
+      setFlaggedExpenses(flagged);
+
+      if (currentUser.company_id && (currentUser.role === 'admin' || currentUser.role === 'manager')) {
+        const company = await getCompanyById(currentUser.company_id);
+        const users = await getCompanyUsers(currentUser.company_id);
+        const allCompanyExpenses = await getCompanyExpenses(currentUser.company_id);
+
+        setCompanyData(company);
+        setCompanyUsers(users);
+        setCompanyExpenses(allCompanyExpenses);
+
+        fetchedData = {
+          ...fetchedData,
+          companyData: company,
+          companyUsers: users,
+          companyExpenses: allCompanyExpenses
+        };
+      }
+
+      // Save the newly fetched data to cache
+      saveToCache(fetchedData);
+
+    } catch (err) {
+      console.error("Error fetching dashboard data:", err);
+      setError("Failed to load dashboard data. Please try again later.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Initial data fetch
+  useEffect(() => {
+    if (currentUser) {
+      fetchFreshData();
+    }
+  }, [currentUser]);
+
+  // Function to manually refresh data (for use after adding expenses)
+  const refreshData = () => {
+    fetchFreshData(true); // Force fetch fresh data
+  };
 
   if (isLoading) {
     return <div className="container mx-auto px-4 py-8">Loading dashboard...</div>;
@@ -65,168 +141,37 @@ const Dashboard = () => {
     return <div className="container mx-auto px-4 py-8 text-red-500">{error}</div>;
   }
 
-  const isAdminOrManager = userData?.role === 'admin' || userData?.role === 'manager';
-
-  const companyExpenseTotal = companyExpenses.length > 0
-    ? companyExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0).toFixed(2)
-    : 0;
-
-  const companyFlaggedExpenses = companyExpenses.filter(exp => exp.is_flagged);
-  const companyFlaggedTotal = companyFlaggedExpenses.length > 0
-    ? companyFlaggedExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0).toFixed(2)
-    : 0;
-
-  // Calculate monthly trend (placeholder logic - this should be replaced with actual logic)
-  const calculateMonthlyTrend = () => {
-    // Placeholder calculation - in a real app, you would compare current month vs previous month
-    return "+12%";
-  };
+  const isAdminOrManager = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-text mb-8">
-        {isAdminOrManager && companyData ? `${companyData.name} Dashboard` : 'My Dashboard'}
-      </h1>
-
-      {/* Dashboard Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div className="bg-secondary p-6 rounded-lg shadow-sm">
-          <div className="flex items-center mb-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <FiDollarSign className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="ml-3 text-lg font-semibold text-text">Total Expenses</h3>
-          </div>
-          <p className="text-2xl font-bold text-text">
-            ${isAdminOrManager && companyExpenses.length > 0
-              ? companyExpenseTotal
-              : expenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0).toFixed(2)}
-          </p>
-          <p className="text-text/70 text-sm mt-2">
-            {isAdminOrManager && companyExpenses.length > 0
-              ? `${companyExpenses.length} company expense entries`
-              : `${expenses.length} expense entries`}
-          </p>
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          {lastFetched && (
+            <p className="text-sm text-text/60">
+              Last updated: {new Date(lastFetched).toLocaleTimeString()}
+            </p>
+          )}
         </div>
-
-        <div className="bg-secondary p-6 rounded-lg shadow-sm">
-          <div className="flex items-center mb-4">
-            <div className="bg-primary/10 p-3 rounded-full">
-              <FiAlertTriangle className="w-6 h-6 text-primary" />
-            </div>
-            <h3 className="ml-3 text-lg font-semibold text-text">Flagged Expenses</h3>
-          </div>
-          <p className="text-2xl font-bold text-text">
-            ${isAdminOrManager && companyFlaggedExpenses.length > 0
-              ? companyFlaggedTotal
-              : flaggedExpenses.reduce((sum, exp) => sum + parseFloat(exp.amount), 0).toFixed(2)}
-          </p>
-          <p className="text-text/70 text-sm mt-2">
-            {isAdminOrManager && companyFlaggedExpenses.length > 0
-              ? `${companyFlaggedExpenses.length} company flagged entries`
-              : `${flaggedExpenses.length} flagged entries`}
-          </p>
-        </div>
-
-        {isAdminOrManager && (
-          <>
-            <div className="bg-secondary p-6 rounded-lg shadow-sm">
-              <div className="flex items-center mb-4">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <FiUsers className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="ml-3 text-lg font-semibold text-text">Team Members</h3>
-              </div>
-              <p className="text-2xl font-bold text-text">
-                {companyUsers.length}
-              </p>
-              <p className="text-text/70 text-sm mt-2">
-                Active employees
-              </p>
-            </div>
-
-            <div className="bg-secondary p-6 rounded-lg shadow-sm">
-              <div className="flex items-center mb-4">
-                <div className="bg-primary/10 p-3 rounded-full">
-                  <FiTrendingUp className="w-6 h-6 text-primary" />
-                </div>
-                <h3 className="ml-3 text-lg font-semibold text-text">Monthly Trend</h3>
-              </div>
-              <p className="text-2xl font-bold text-text">
-                {calculateMonthlyTrend()}
-              </p>
-              <p className="text-text/70 text-sm mt-2">
-                Compared to last month
-              </p>
-            </div>
-          </>
-        )}
+        <button
+          onClick={refreshData}
+          className="text-sm bg-primary/10 text-primary px-3 py-1 rounded hover:bg-primary/20"
+        >
+          Refresh Data
+        </button>
       </div>
 
-      {/* Recent Expenses */}
-      <div className="bg-secondary rounded-lg shadow-sm p-6 mb-10">
-        <h2 className="text-xl font-semibold text-text mb-4">
-          {isAdminOrManager && companyExpenses.length > 0 ? 'Recent Company Expenses' : 'Recent Expenses'}
-        </h2>
-
-        {(isAdminOrManager ? companyExpenses : expenses).length === 0 ? (
-          <p className="text-text/70">No expenses found. Start by adding some expenses.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-text">
-              <thead className="text-left">
-                <tr className="border-b border-primary/10">
-                  <th className="pb-3">Date</th>
-                  <th className="pb-3">Description</th>
-                  <th className="pb-3">Category</th>
-                  <th className="pb-3">Amount</th>
-                  <th className="pb-3">Status</th>
-                  {isAdminOrManager && <th className="pb-3">Employee</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {(isAdminOrManager && companyExpenses.length > 0 ? companyExpenses : expenses).slice(0, 5).map((expense) => (
-                  <tr key={expense.id} className="border-b border-primary/5">
-                    <td className="py-3">{new Date(expense.date).toLocaleDateString()}</td>
-                    <td className="py-3">{expense.description}</td>
-                    <td className="py-3">{expense.category}</td>
-                    <td className="py-3">${parseFloat(expense.amount).toFixed(2)}</td>
-                    <td className="py-3">
-                      {expense.is_flagged ? (
-                        <span className="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">
-                          Flagged
-                        </span>
-                      ) : (
-                        <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">
-                          Approved
-                        </span>
-                      )}
-                    </td>
-                    {isAdminOrManager && (
-                      <td className="py-3">{expense.user_name || "Unknown"}</td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
-
-      {/* Admin-only sections */}
-      {isAdminOrManager && (
-        <div className="bg-secondary rounded-lg shadow-sm p-6">
-          <h2 className="text-xl font-semibold text-text mb-4">Company Policies</h2>
-          <p className="text-text/70 mb-4">
-            Manage expense policies to automatically flag non-compliant submissions.
-          </p>
-          <button
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
-            onClick={() => navigate('/policies')}
-          >
-            Manage Policies
-          </button>
-        </div>
+      {isAdminOrManager && currentUser?.company_id ? (
+        <AdminDashboard
+          companyData={companyData}
+          companyUsers={companyUsers}
+          companyExpenses={companyExpenses}
+        />
+      ) : (
+        <EmployeeDashboard
+          expenses={expenses}
+          flaggedExpenses={flaggedExpenses}
+        />
       )}
     </div>
   );

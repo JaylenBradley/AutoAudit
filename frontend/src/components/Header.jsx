@@ -44,9 +44,15 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden md:flex items-center gap-6">
           <Link to="/" className="text-text hover:text-primary transition-colors">Home</Link>
-          <Link to="/expenses" className="text-text hover:text-primary transition-colors">Expenses</Link>
-          <Link to="/policies" className="text-text hover:text-primary transition-colors">Policies</Link>
-          <Link to="/dashboard" className="text-text hover:text-primary transition-colors">Dashboard</Link>
+
+          {isAuthenticated && (
+            <>
+              <Link to="/dashboard" className="text-text hover:text-primary transition-colors">Dashboard</Link>
+              <Link to="/expenses" className="text-text hover:text-primary transition-colors">Expenses</Link>
+              <Link to="/policies" className="text-text hover:text-primary transition-colors">Policies</Link>
+              <Link to="/profile" className="text-text hover:text-primary transition-colors">Profile</Link>
+            </>
+          )}
 
           {isAuthenticated ? (
             <button
@@ -68,23 +74,36 @@ const Header = () => {
       {/* Mobile Navigation */}
       {isMenuOpen && (
         <nav className="md:hidden bg-secondary px-4 py-2 flex flex-col gap-2">
-          <Link to="/" className="text-text hover:text-primary py-2 transition-colors">Home</Link>
-          <Link to="/expenses" className="text-text hover:text-primary py-2 transition-colors">Expenses</Link>
-          <Link to="/policies" className="text-text hover:text-primary py-2 transition-colors">Policies</Link>
-          <Link to="/dashboard" className="text-text hover:text-primary py-2 transition-colors">Dashboard</Link>
+          <Link to="/" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Home</Link>
+
+          {isAuthenticated && (
+            <>
+              <Link to="/dashboard" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+              <Link to="/expenses" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Expenses</Link>
+              <Link to="/policies" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Policies</Link>
+              <Link to="/profile" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Profile</Link>
+            </>
+          )}
 
           {isAuthenticated ? (
             <button
-              onClick={handleLogout}
+              onClick={() => {
+                handleLogout();
+                setIsMenuOpen(false);
+              }}
               className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
             >
               Logout
             </button>
           ) : (
-            <Link to="/login" className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors">
+            <Link to="/login" className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors" onClick={() => setIsMenuOpen(false)}>
               Login
             </Link>
           )}
+
+          <div className="py-2">
+            <ThemeToggle />
+          </div>
         </nav>
       )}
     </header>

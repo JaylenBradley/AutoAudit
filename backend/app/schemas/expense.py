@@ -17,9 +17,12 @@ class ExpenseBase(BaseModel):
     amount: float
     date: datetime
     description: Optional[str] = None
-    category: CategoryEnum = CategoryEnum.GENERAL
+    notes: Optional[str] = None
+    receipt_image_url: Optional[str] = None
+    category: Optional[CategoryEnum] = None
 
 class ExpenseCreate(ExpenseBase):
+    company_id: int
     user_id: int
 
 class ExpenseUpdate(BaseModel):

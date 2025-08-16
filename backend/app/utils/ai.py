@@ -8,9 +8,6 @@ load_dotenv()
 openai.api_key = os.getenv("OPENAPI_KEY")
 
 def categorize_expense(expense_data):
-
-    # Use OpenAI to categorize an expense as either 'general' or 'travel'.
-
     prompt = categorize_expense_prompt(expense_data)
 
     try:
@@ -32,7 +29,8 @@ def categorize_expense(expense_data):
         category = response.choices[0].message.content.strip().lower()
 
         # Ensure we only return valid categories - hallucination protection
-        if category not in ["general", "travel"]:
+        valid_categories = ["general", "travel", "food", "lodging", "transportation", "supplies", "other"]
+        if category not in valid_categories:
             return "general"
 
         return category
@@ -40,4 +38,3 @@ def categorize_expense(expense_data):
     except Exception as e:
         print(f"Error categorizing expense: {e}")
         return "general"
-

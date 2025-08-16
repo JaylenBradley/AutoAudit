@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from typing import List
 from app.core import SessionLocal
-from app.models import Expense, Policy
+from app.models import Expense, Policy, User
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate, ExpenseResponse, ExpenseBulkUpdate, CSVUploadResponse
 from app.crud.expense import (
     create_expense,
@@ -30,15 +30,15 @@ def get_db():
 
 @router.post("/expenses", response_model=ExpenseResponse)
 def create_expense_route(expense: ExpenseCreate, db: Session = Depends(get_db)):
-    policies = get_policies(db)
+    expense_data = expense.dict()
 
     # Use AI to categorize if not already specified
-    if not expense.category:
-        expense.category = categorize_expense(expense.dict())
+    if not expense_data["category"]:
+        expense_data["category"] = categorize_expense(expense_data)
 
-    is_flagged, flag_reason, is_approved = check_expense_against_policies(expense.dict(), policies)
+    policies = get_policies(db)
+    is_flagged, flag_reason, is_approved = check_expense_against_policies(expense_data, policies)
 
-    expense_data = expense.dict()
     expense_data["is_flagged"] = is_flagged
     expense_data["flag_reason"] = flag_reason
     expense_data["is_approved"] = not is_flagged if is_approved is None else is_approved
@@ -90,6 +90,7 @@ def delete_expense_route(expense_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Expense not found")
     return {"detail": "Expense deleted"}
 
+
 @router.post("/users/{user_id}/upload-expenses", response_model=CSVUploadResponse)
 async def upload_expenses_route(
         user_id: int,
@@ -99,11 +100,19 @@ async def upload_expenses_route(
     if not file.filename.endswith('.csv'):
         raise HTTPException(status_code=400, detail="Only CSV files are supported")
 
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    company_id = user.company_id
+    if not company_id:
+        raise HTTPException(status_code=400, detail="User is not associated with a company")
+
     content = await file.read()
     content_str = content.decode('utf-8')
 
     policies = get_policies(db)
 
-    stats = process_csv(db, user_id, content_str, policies, categorize_expense)
+    stats = process_csv(db, user_id, company_id, content_str, policies, categorize_expense)
 
     return stats

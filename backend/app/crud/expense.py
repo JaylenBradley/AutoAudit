@@ -68,7 +68,7 @@ def delete_expense(db: Session, expense_id: int):
     db.commit()
     return True
 
-def process_csv(db: Session, user_id: int, file_content: str, policies, categorize_func):
+def process_csv(db: Session, user_id: int, company_id: int, file_content: str, policies, categorize_func):
     csv_file = StringIO(file_content)
     reader = csv.DictReader(csv_file)
 
@@ -77,6 +77,7 @@ def process_csv(db: Session, user_id: int, file_content: str, policies, categori
     for row in reader:
         try:
             expense_data = {
+                "company_id": company_id,
                 "user_id": user_id,
                 "merchant": row.get("merchant", ""),
                 "amount": float(row.get("amount", 0)),

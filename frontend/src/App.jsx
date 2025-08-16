@@ -8,6 +8,7 @@ import Footer from './components/Footer';
 import Header from './components/Header';
 import Home from './pages/Home';
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import UserProfile from "./pages/UserProfile.jsx";
 
 const App = () => {
   return (
@@ -24,6 +25,11 @@ const App = () => {
                 <Route path="dashboard" element={
                   <ProtectedRoute>
                     <Dashboard/>
+                  </ProtectedRoute>
+                }/>
+                <Route path="/profile" element={
+                  <ProtectedRoute>
+                    <UserProfile/>
                   </ProtectedRoute>
                 }/>
                 <Route path="*" element={<Error/>}/>

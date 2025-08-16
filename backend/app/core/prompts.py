@@ -1,7 +1,7 @@
 def categorize_expense_prompt(expense_data):
     return f"""
     Categorize the following expense into one of these categories:
-    - general: Miscellaneous business expenses that don't fit other categories
+    - general: Common business expenses like subscriptions, memberships, fees, or professional services
     - travel: General travel expenses not specifically food, lodging, or transportation
     - food: Meals, restaurants, catering, grocery purchases for business purposes
     - lodging: Hotels, accommodations, rentals for business stays

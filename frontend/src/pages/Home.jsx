@@ -7,7 +7,6 @@ import { FiUpload } from "react-icons/fi";
 
 const Home = () => {
   const { currentUser } = useAuth();
-
   useScrollToTop();
 
   return (
@@ -24,9 +23,15 @@ const Home = () => {
               flag policy violations, and save your team valuable time
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/signup" className="bg-primary text-white px-6 py-3 rounded-md hover:bg-opacity-90 transition-colors font-medium">
-                Get Started
-              </Link>
+              {currentUser ? (
+                <Link to="/dashboard" className="bg-primary text-white px-6 py-3 rounded-md hover:bg-opacity-90 transition-colors font-medium">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <Link to="/signup" className="bg-primary text-white px-6 py-3 rounded-md hover:bg-opacity-90 transition-colors font-medium">
+                  Get Started
+                </Link>
+              )}
             </div>
           </div>
         </section>
@@ -71,9 +76,15 @@ const Home = () => {
             <p className="text-lg text-text/80 max-w-2xl mx-auto mb-8">
               Join thousands of companies using AutoAudit to save time and ensure compliance
             </p>
-            <Link to="/signup" className="bg-primary text-white px-6 py-3 rounded-md hover:bg-opacity-90 transition-colors font-medium inline-block">
-              Get Started Now
-            </Link>
+            {currentUser ? (
+                <Link to="/dashboard" className="bg-primary text-white px-6 py-3 rounded-md hover:bg-opacity-90 transition-colors font-medium">
+                  Go to Dashboard
+                </Link>
+              ) : (
+                <Link to="/signup" className="bg-primary text-white px-6 py-3 rounded-md hover:bg-opacity-90 transition-colors font-medium">
+                  Get Started
+                </Link>
+            )}
           </div>
         </section>
       </main>
