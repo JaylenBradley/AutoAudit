@@ -12,7 +12,7 @@ def categorize_expense(expense_data):
 
     try:
         response = openai.chat.completions.create(
-            model="gpt-5-nano-2025-08-07",
+            model="gpt-5-nano",
             messages=[
                 {
                 "role": "system",

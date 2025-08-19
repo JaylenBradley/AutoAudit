@@ -1,176 +1,193 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getUserExpenses, getUserFlaggedExpenses } from '../services/expenseServices';
-import { getCompanyById, getCompanyUsers, getCompanyExpenses } from '../services/companyServices';
-import { useNavigate } from 'react-router-dom';
+import { useCompanyById } from '../hooks/useCompanyQueries';
+import { useUserExpenses, useUserFlaggedExpenses } from '../hooks/useExpenseQueries';
+import { useUsers } from '../hooks/useUserQueries';
+import { useScrollToTop } from "../hooks/useScrollToTop.js";
+import { useToast } from '../context/ToastContext';
 import AdminDashboard from '../components/AdminDashboard';
 import EmployeeDashboard from '../components/EmployeeDashboard';
+import Spinner from '../components/Spinner';
+import { FiUsers, FiPlus, FiLogIn } from 'react-icons/fi';
 
 const Dashboard = () => {
   const { currentUser } = useAuth();
-  const navigate = useNavigate();
-  const [companyData, setCompanyData] = useState(null);
-  const [companyUsers, setCompanyUsers] = useState([]);
-  const [companyExpenses, setCompanyExpenses] = useState([]);
-  const [expenses, setExpenses] = useState([]);
-  const [flaggedExpenses, setFlaggedExpenses] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [lastFetched, setLastFetched] = useState(null);
+  const toast = useToast();
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+  useScrollToTop();
 
-  // Function to load data from cache
-  const loadFromCache = () => {
-    try {
-      const cachedData = localStorage.getItem(`expenses_cache_${currentUser.id}`);
-      if (cachedData) {
-        const {
-          timestamp,
-          expenses: cachedExpenses,
-          flaggedExpenses: cachedFlagged,
-          companyData: cachedCompanyData,
-          companyUsers: cachedCompanyUsers,
-          companyExpenses: cachedCompanyExpenses
-        } = JSON.parse(cachedData);
+  const isAdmin = currentUser?.role === 'admin';
+  const hasCompany = !!currentUser?.company_id;
 
-        // Check if cache is still valid (30 minutes)
-        const now = new Date().getTime();
-        if (now - timestamp < 30 * 60 * 1000) {
-          setExpenses(cachedExpenses);
-          setFlaggedExpenses(cachedFlagged);
-          if (cachedCompanyData) setCompanyData(cachedCompanyData);
-          if (cachedCompanyUsers) setCompanyUsers(cachedCompanyUsers);
-          if (cachedCompanyExpenses) setCompanyExpenses(cachedCompanyExpenses);
-          setLastFetched(timestamp);
-          return true;
-        }
-      }
-      return false;
-    } catch (err) {
-      console.error("Error loading from cache:", err);
-      return false;
+  // Fetch company data if user has a company
+  const {
+    data: companyData,
+    isLoading: companyLoading,
+    error: companyError
+  } = useCompanyById(currentUser?.company_id, {
+    enabled: hasCompany,
+    onError: (error) => {
+      toast.error(`Failed to load company data: ${error.message}`);
     }
+  });
+
+  // Fetch user expenses
+  const {
+    data: userExpenses = [],
+    isLoading: expensesLoading,
+    error: expensesError
+  } = useUserExpenses(currentUser?.id, {
+    enabled: !!currentUser?.id,
+    onError: (error) => {
+      toast.error(`Failed to load expenses: ${error.message}`);
+    }
+  });
+
+  // Fetch flagged expenses
+  const {
+    data: flaggedExpenses = [],
+    isLoading: flaggedExpensesLoading,
+    error: flaggedExpensesError
+  } = useUserFlaggedExpenses(currentUser?.id, {
+    enabled: !!currentUser?.id,
+    onError: (error) => {
+      toast.error(`Failed to load flagged expenses: ${error.message}`);
+    }
+  });
+
+  // Fetch company users if admin
+  const {
+    data: companyUsers = [],
+    isLoading: usersLoading,
+    error: usersError
+  } = useUsers({
+    enabled: hasCompany && isAdmin,
+    onError: (error) => {
+      toast.error(`Failed to load company users: ${error.message}`);
+    }
+  });
+
+  // Handle refresh
+  const handleRefresh = () => {
+    setRefreshTrigger(prev => prev + 1);
   };
 
-  // Function to save data to cache
-  const saveToCache = (data) => {
-    try {
-      const timestamp = new Date().getTime();
-      const cacheData = {
-        timestamp,
-        expenses: data.expenses || expenses,
-        flaggedExpenses: data.flaggedExpenses || flaggedExpenses,
-        companyData: data.companyData || companyData,
-        companyUsers: data.companyUsers || companyUsers,
-        companyExpenses: data.companyExpenses || companyExpenses
-      };
-
-      localStorage.setItem(`expenses_cache_${currentUser.id}`, JSON.stringify(cacheData));
-      setLastFetched(timestamp);
-    } catch (err) {
-      console.error("Error saving to cache:", err);
-    }
-  };
-
-  // Function to fetch fresh data
-  const fetchFreshData = async (forceFetch = false) => {
-    try {
-      setIsLoading(true);
-
-      // If not forcing fetch, try to load from cache first
-      if (!forceFetch && loadFromCache()) {
-        setIsLoading(false);
-        return;
-      }
-
-      const userExpenses = await getUserExpenses(currentUser.id);
-      const flagged = await getUserFlaggedExpenses(currentUser.id);
-
-      let fetchedData = {
-        expenses: userExpenses,
-        flaggedExpenses: flagged
-      };
-
-      setExpenses(userExpenses);
-      setFlaggedExpenses(flagged);
-
-      if (currentUser.company_id && (currentUser.role === 'admin' || currentUser.role === 'manager')) {
-        const company = await getCompanyById(currentUser.company_id);
-        const users = await getCompanyUsers(currentUser.company_id);
-        const allCompanyExpenses = await getCompanyExpenses(currentUser.company_id);
-
-        setCompanyData(company);
-        setCompanyUsers(users);
-        setCompanyExpenses(allCompanyExpenses);
-
-        fetchedData = {
-          ...fetchedData,
-          companyData: company,
-          companyUsers: users,
-          companyExpenses: allCompanyExpenses
-        };
-      }
-
-      // Save the newly fetched data to cache
-      saveToCache(fetchedData);
-
-    } catch (err) {
-      console.error("Error fetching dashboard data:", err);
-      setError("Failed to load dashboard data. Please try again later.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Initial data fetch
+  // Error handling
   useEffect(() => {
-    if (currentUser) {
-      fetchFreshData();
+    if (companyError) {
+      toast.error("Failed to load company data");
     }
-  }, [currentUser]);
+    if (expensesError) {
+      toast.error("Failed to load expenses");
+    }
+    if (flaggedExpensesError) {
+      toast.error("Failed to load flagged expenses");
+    }
+    if (usersError && isAdmin) {
+      toast.error("Failed to load company users");
+    }
+  }, [companyError, expensesError, flaggedExpensesError, usersError, isAdmin, toast]);
 
-  // Function to manually refresh data (for use after adding expenses)
-  const refreshData = () => {
-    fetchFreshData(true); // Force fetch fresh data
-  };
+  // Display no company screen if user doesn't have a company
+  if (!hasCompany) {
+    return (
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-2xl mx-auto bg-secondary p-8 rounded-lg shadow-sm text-center">
+          <h1 className="text-3xl font-bold text-text mb-6">Welcome to AutoAudit</h1>
 
-  if (isLoading) {
-    return <div className="container mx-auto px-4 py-8">Loading dashboard...</div>;
+          <div className="bg-primary/10 p-6 rounded-lg mb-8">
+            <p className="text-lg text-text mb-4">
+              You're not currently associated with any company. To get started,
+              you can either join an existing company or register a new one.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+            <div className="bg-background p-6 rounded-lg shadow-sm">
+              <div className="flex justify-center mb-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <FiLogIn className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              <h2 className="text-xl font-semibold text-text mb-3">Join a Company</h2>
+              <p className="text-text/70 mb-6">
+                Connect to an existing company to track and manage your expenses
+              </p>
+              <Link
+                to="/profile"
+                className="block w-full bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
+              >
+                Select Company
+              </Link>
+            </div>
+
+            <div className="bg-background p-6 rounded-lg shadow-sm">
+              <div className="flex justify-center mb-4">
+                <div className="bg-primary/10 p-3 rounded-full">
+                  <FiPlus className="w-8 h-8 text-primary" />
+                </div>
+              </div>
+              <h2 className="text-xl font-semibold text-text mb-3">Register New Company</h2>
+              <p className="text-text/70 mb-6">
+                Create a new company profile and become its administrator
+              </p>
+              <Link
+                to="/register-company"
+                className="block w-full bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
+              >
+                Create Company
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  if (error) {
-    return <div className="container mx-auto px-4 py-8 text-red-500">{error}</div>;
+  // Loading state
+  if (companyLoading || expensesLoading || flaggedExpensesLoading || (isAdmin && usersLoading)) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
   }
-
-  const isAdminOrManager = currentUser?.role === 'admin' || currentUser?.role === 'manager';
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8">
         <div>
-          {lastFetched && (
-            <p className="text-sm text-text/60">
-              Last updated: {new Date(lastFetched).toLocaleTimeString()}
+          <h1 className="text-3xl font-bold text-text">Dashboard</h1>
+          {companyData && (
+            <p className="text-text/60 mt-1">
+              {companyData.name} - {isAdmin ? 'Administrator' : 'Employee'} View
             </p>
           )}
         </div>
-        <button
-          onClick={refreshData}
-          className="text-sm bg-primary/10 text-primary px-3 py-1 rounded hover:bg-primary/20"
-        >
-          Refresh Data
-        </button>
+
+        {isAdmin && (
+          <Link
+            to={`/company/${companyData?.id}`}
+            className="mt-4 md:mt-0 flex items-center text-primary hover:underline"
+          >
+            <FiUsers className="mr-1" /> Manage Company
+          </Link>
+        )}
       </div>
 
-      {isAdminOrManager && currentUser?.company_id ? (
+      {isAdmin ? (
         <AdminDashboard
           companyData={companyData}
           companyUsers={companyUsers}
-          companyExpenses={companyExpenses}
+          companyExpenses={userExpenses}
+          onRefresh={handleRefresh}
         />
       ) : (
         <EmployeeDashboard
-          expenses={expenses}
+          expenses={userExpenses}
           flaggedExpenses={flaggedExpenses}
+          onRefresh={handleRefresh}
         />
       )}
     </div>

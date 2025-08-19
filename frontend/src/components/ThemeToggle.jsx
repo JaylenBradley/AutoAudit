@@ -14,9 +14,9 @@ const ThemeToggle = () => {
       aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
     >
       {isDarkMode ? (
-        <FiSun className="w-5 h-5" />
-      ) : (
         <FiMoon className="w-5 h-5" />
+      ) : (
+        <FiSun className="w-5 h-5" />
       )}
     </button>
   );

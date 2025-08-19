@@ -48,8 +48,6 @@ const Header = () => {
           {isAuthenticated && (
             <>
               <Link to="/dashboard" className="text-text hover:text-primary transition-colors">Dashboard</Link>
-              <Link to="/expenses" className="text-text hover:text-primary transition-colors">Expenses</Link>
-              <Link to="/policies" className="text-text hover:text-primary transition-colors">Policies</Link>
               <Link to="/profile" className="text-text hover:text-primary transition-colors">Profile</Link>
             </>
           )}
@@ -79,8 +77,6 @@ const Header = () => {
           {isAuthenticated && (
             <>
               <Link to="/dashboard" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
-              <Link to="/expenses" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Expenses</Link>
-              <Link to="/policies" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Policies</Link>
               <Link to="/profile" className="text-text hover:text-primary py-2 transition-colors" onClick={() => setIsMenuOpen(false)}>Profile</Link>
             </>
           )}

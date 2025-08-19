@@ -1,49 +1,60 @@
-import { createContext, useState, useEffect, useContext } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import { app } from '../services/firebase';
-import { getUserByFirebaseId } from '../services/userServices';
+import { useUserByFirebaseId } from '../hooks/useUserQueries';
+import { useToast } from './ToastContext';
 
 const auth = getAuth(app);
 
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [firebaseUser, setFirebaseUser] = useState(null);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const toast = useToast();
+
+  const {
+    data: userData,
+    error: userError,
+    isLoading: userLoading,
+    refetch: refetchUser
+  } = useUserByFirebaseId(firebaseUser?.uid, {
+    enabled: !!firebaseUser?.uid,
+    onError: (error) => {
+      toast.error(`Error fetching user data: ${error.message}`);
+    }
+  });
+
+  const currentUser = firebaseUser ? {
+    ...(userData || {}),
+    firebaseUser
+  } : null;
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        try {
-          const userData = await getUserByFirebaseId(user.uid);
-          setCurrentUser({
-            ...userData,
-            firebaseUser: user
-          });
-        } catch (error) {
-          console.error("Error fetching user data:", error);
-          setCurrentUser({
-            firebaseUser: user
-          });
-        }
-      } else {
-        setCurrentUser(null);
-      }
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setFirebaseUser(user);
+      setInitialLoading(false);
     });
 
     return () => unsubscribe();
   }, []);
 
+  const updateUserData = () => {
+    if (firebaseUser) {
+      refetchUser();
+    }
+  };
+
   const value = {
     currentUser,
-    loading,
-    isAuthenticated: !!currentUser
+    loading: initialLoading || (!!firebaseUser && userLoading),
+    isAuthenticated: !!currentUser,
+    updateUserData
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {!initialLoading && children}
     </AuthContext.Provider>
   );
 };
