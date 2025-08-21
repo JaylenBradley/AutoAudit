@@ -1,5 +1,4 @@
-// src/components/CompanyForm.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
@@ -16,15 +15,14 @@ const CompanyForm = ({ initialData = {}, onSubmit, isUpdate = false }) => {
     description: initialData.description || ''
   });
 
-  // Check if user is admin
   const isAdmin = currentUser?.role === 'admin';
 
-  // Redirect non-admins attempting to update
-  if (isUpdate && !isAdmin) {
-    toast.error('Only administrators can update company information');
-    navigate('/dashboard');
-    return null;
-  }
+  useEffect(() => {
+    if (isUpdate && !isAdmin) {
+      toast.error('Only administrators can update company information');
+      navigate('/dashboard');
+    }
+  }, [isUpdate, isAdmin, toast, navigate]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -93,14 +91,18 @@ const CompanyForm = ({ initialData = {}, onSubmit, isUpdate = false }) => {
           <button
             type="button"
             onClick={() => navigate('/dashboard')}
-            className="px-5 py-3 border border-primary/20 rounded text-text mr-4 hover:bg-primary/10 transition-colors"
+            className="
+            px-5 py-3 border border-primary/20 rounded-lg text-text mr-4
+            hover:bg-primary/10 transition-colors cursor-pointer"
           >
             Cancel
           </button>
 
           <button
             type="submit"
-            className="bg-primary text-white px-6 py-3 rounded hover:bg-opacity-90 transition-colors font-medium"
+            className="
+            bg-primary text-white px-6 py-3 rounded-lg
+            hover:bg-primary/80 transition-colors font-medium cursor-pointer"
           >
             {isUpdate ? 'Update Company' : 'Register Company'}
           </button>

@@ -3,7 +3,7 @@ import ExpenseAnalytics from './dashboard/ExpenseAnalytics';
 import ExpenseTable from './dashboard/ExpenseTable';
 import CompanyPolicies from './dashboard/CompanyPolicies';
 
-const AdminDashboard = ({
+const ManagerDashboard = ({
   currentUser,
   companyData = [],
   companyExpenses = [],
@@ -72,12 +72,13 @@ const AdminDashboard = ({
         policies={policies}
         isLoading={policiesLoading}
         error={policiesError}
-        canAddPolicy={true}
+        canAddPolicy={false}
         addPolicyLink="/policies/create"
         emptyMessage="No company policies found"
+        currentUser={currentUser}
       />
     </div>
   );
 };
 
-export default AdminDashboard;
+export default ManagerDashboard;

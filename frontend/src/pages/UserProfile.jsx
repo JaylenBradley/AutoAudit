@@ -1,129 +1,223 @@
 import { useState, useEffect, useRef } from 'react';
-import { useAuth } from '../context/AuthContext';
-import { useUpdateUser } from '../hooks/useUserQueries';
-import { useCompanies } from '../hooks/useCompanyQueries';
-import { useScrollToTop } from "../hooks/useScrollToTop.js";
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { IoSearch } from 'react-icons/io5';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useUpdateUser } from '../hooks/useUserQueries';
+import { useCompanies, useCompanyById } from '../hooks/useCompanyQueries';
+import { useScrollToTop } from '../hooks/useScrollToTop';
 import Spinner from '../components/Spinner';
 
 const UserProfile = () => {
   const { currentUser, updateUserData } = useAuth();
-  const [selectedCompany, setSelectedCompany] = useState(currentUser?.company_id || '');
+  const [formData, setFormData] = useState({
+    username: '',
+    email: '',
+    company_id: null,
+    company_name: ''
+  });
   const [selectedRole, setSelectedRole] = useState(currentUser?.role || 'employee');
   const [searchTerm, setSearchTerm] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
-  const dropdownRef = useRef(null);
+  const [showResults, setShowResults] = useState(false);
+  const searchRef = useRef(null);
+  const navigate = useNavigate();
   const toast = useToast();
   useScrollToTop();
 
-  // Use React Query for data fetching
   const {
-    data: companies = [],
-    isLoading: companiesLoading,
-    error: companiesError
-  } = useCompanies();
-
-  const {
-    mutate: updateUserMutation,
+    mutate: updateUser,
     isLoading: updateLoading,
     error: updateError
   } = useUpdateUser({
     onSuccess: (data) => {
-      updateUserData();
       toast.success('Profile updated successfully');
+      updateUserData();
+
+      if (data.company_id && !currentUser.company_id) {
+        navigate('/dashboard');
+      }
     },
     onError: (error) => {
       toast.error(`Failed to update profile: ${error.message}`);
     }
   });
 
-  // Filter companies based on search term
-  const filteredCompanies = companies.filter(company =>
-    company.name.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch all companies for search
+  const {
+    data: companies = [],
+    isLoading: companiesLoading
+  } = useCompanies({
+    onError: (error) => {
+      toast.error(`Failed to load companies: ${error.message}`);
+    }
+  });
+
+  const { data: companyData, isLoading: companyLoading } = useCompanyById(
+    currentUser?.company_id,
+    { enabled: !!currentUser?.company_id }
   );
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    updateUserMutation({
-      id: currentUser.id,
-      userData: {
-        company_id: selectedCompany === '' ? null : parseInt(selectedCompany),
-        role: selectedRole
-      }
-    });
-  };
+  // Initialize form data from user data
+  useEffect(() => {
+    if (currentUser) {
+      setFormData({
+        username: currentUser.username || '',
+        email: currentUser.email || '',
+        company_id: currentUser.company_id || null,
+        company_name: currentUser.company_name || ''
+      });
+    }
+  }, [currentUser]);
 
-  // Close dropdown when clicking outside
+  // Handle click outside search results
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setShowDropdown(false);
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowResults(false);
       }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, []);
 
-  useEffect(() => {
-    if (companiesError) {
-      toast.error("Failed to load companies");
-    }
-  }, [companiesError, toast]);
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCompanySearch = (e) => {
+    setSearchTerm(e.target.value);
+    setShowResults(true);
+  };
+
+  const handleCompanySelect = (company) => {
+    setFormData((prev) => ({
+      ...prev,
+      company_id: company.id,
+      company_name: company.name
+    }));
+    setShowResults(false);
+    setSearchTerm('');
+  };
+
+  const handleClearCompany = () => {
+    setFormData((prev) => ({
+      ...prev,
+      company_id: null,
+      company_name: ''
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const userData = {
+      username: formData.username,
+      company_id: formData.company_id,
+      role: selectedRole
+    };
+
+    updateUser({
+      id: currentUser.id,
+      userData
+    });
+  };
+
+  // Filter companies based on search term
+  const filteredCompanies = searchTerm
+    ? companies.filter(company =>
+        company.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    : companies;
+
+  if (!currentUser) {
+    return (
+      <div className="container mx-auto px-4 py-8 flex justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-text mb-8">User Profile</h1>
+      <h1 className="text-3xl font-bold text-text mb-6">Your Profile</h1>
 
       <div className="bg-secondary p-6 rounded-lg shadow-sm">
-        <form onSubmit={handleSubmit}>
-          <div className="mb-6 relative" ref={dropdownRef}>
-            <label className="block text-text font-medium mb-2">Select Company</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search for a company..."
-                value={searchTerm}
-                onChange={(e) => {
-                  setSearchTerm(e.target.value);
-                  setShowDropdown(true);
-                }}
-                onFocus={() => setShowDropdown(true)}
-                className="w-full p-2 border border-primary/20 rounded bg-transparent text-text pl-10"
-              />
-              <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-text/50" />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label htmlFor="username" className="block text-text font-medium mb-2">Username</label>
+            <input
+              id="username"
+              name="username"
+              type="text"
+              value={formData.username}
+              onChange={handleChange}
+              className="w-full p-3 border border-primary/20 rounded bg-transparent text-text"
+              placeholder="Your username"
+            />
+          </div>
 
-            {showDropdown && (
-              <div className="absolute z-10 mt-1 w-full bg-secondary border border-primary/20 rounded shadow-lg max-h-60 overflow-y-auto">
-                {companiesLoading ? (
-                  <div className="p-3 flex justify-center">
-                    <Spinner size="sm" />
+          <div>
+            <label htmlFor="email" className="block text-text font-medium mb-2">Email</label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              disabled
+              className="w-full p-3 border border-primary/20 rounded bg-transparent text-text opacity-70"
+            />
+            <p className="text-xs text-text/60 mt-1">Email cannot be changed</p>
+          </div>
+
+          <div>
+            <label htmlFor="company" className="block text-text font-medium mb-2">Company</label>
+            {formData.company_id ? (
+              <div className="flex items-center">
+                <span className="bg-primary/10 text-primary px-3 py-2 rounded flex-grow">
+                  {companyLoading ? 'Loading company...' : (companyData?.name || 'No company selected')}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleClearCompany}
+                  className="ml-2 px-3 py-2 border border-primary/20 rounded-lg text-text hover:bg-primary/20 transition-colors cursor-pointer"
+                >
+                  Change
+                </button>
+              </div>
+            ) : (
+              <div className="relative" ref={searchRef}>
+                <input
+                  type="text"
+                  value={searchTerm}
+                  onChange={handleCompanySearch}
+                  onFocus={() => setShowResults(true)}
+                  className="w-full p-3 border border-primary/20 rounded bg-transparent text-text"
+                  placeholder="Search for companies..."
+                />
+                {showResults && (
+                  <div className="absolute z-10 mt-1 w-full bg-background border border-primary/20 rounded shadow-lg max-h-60 overflow-auto">
+                    {companiesLoading ? (
+                      <div className="p-3 text-center">Loading...</div>
+                    ) : filteredCompanies.length > 0 ? (
+                      filteredCompanies.map(company => (
+                        <div
+                          key={company.id}
+                          className="p-3 text-text hover:bg-primary/10 cursor-pointer"
+                          onClick={() => handleCompanySelect(company)}
+                        >
+                          {company.name}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-3 text-center">No companies found</div>
+                    )}
                   </div>
-                ) : filteredCompanies.length > 0 ? (
-                  filteredCompanies.map(company => (
-                    <div
-                      key={company.id}
-                      className={`p-2 cursor-pointer hover:bg-primary/10 ${selectedCompany === company.id ? 'bg-primary/20' : ''}`}
-                      onClick={() => {
-                        setSelectedCompany(company.id);
-                        setSearchTerm(company.name);
-                        setShowDropdown(false);
-                      }}
-                    >
-                      <div className="flex items-center">
-                        <span className="text-text">{company.name}</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="p-3 text-text/60">No companies found</div>
                 )}
               </div>
             )}
-
             <div className="mt-2">
               <Link
                 to="/register-company"
@@ -139,7 +233,7 @@ const UserProfile = () => {
             <select
               value={selectedRole}
               onChange={(e) => setSelectedRole(e.target.value)}
-              className="w-full p-2 border border-primary/20 rounded bg-transparent text-text"
+              className="w-full p-2 border border-primary/20 rounded bg-transparent text-text cursor-pointer"
             >
               <option value="employee">Employee</option>
               <option value="manager">Manager</option>
@@ -153,7 +247,7 @@ const UserProfile = () => {
           <button
             type="submit"
             disabled={updateLoading}
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50"
+            className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50 cursor-pointer"
           >
             {updateLoading ? 'Updating...' : 'Update Profile'}
           </button>

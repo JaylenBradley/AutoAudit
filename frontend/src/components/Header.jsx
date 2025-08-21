@@ -6,19 +6,30 @@ import { useAuth } from '../context/AuthContext';
 import { getAuth } from 'firebase/auth';
 import { app } from '../services/firebase';
 import { useNavigate } from "react-router-dom";
+import { useToast } from "../context/ToastContext.jsx";
 
 const auth = getAuth(app);
 
 const Header = () => {
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { currentUser, isAuthenticated } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
+
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  const cancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
 
   const handleLogout = () => {
-    if (window.confirm("Are you sure you want to logout?")) {
-      auth.signOut();
-      navigate('/login')
-    }
+    auth.signOut();
+    navigate('/login');
+    toast.success("You've been logged out.");
+    setShowLogoutConfirm(false);
   };
 
   return (
@@ -54,13 +65,13 @@ const Header = () => {
 
           {isAuthenticated ? (
             <button
-              onClick={handleLogout}
-              className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors cursor-pointer"
+              onClick={handleLogoutClick}
+              className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 transition-colors cursor-pointer"
             >
               Logout
             </button>
           ) : (
-            <Link to="/login" className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors">
+            <Link to="/login" className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 transition-colors">
               Login
             </Link>
           )}
@@ -101,6 +112,29 @@ const Header = () => {
             <ThemeToggle />
           </div>
         </nav>
+      )}
+
+      {showLogoutConfirm && (
+        <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
+          <div className="bg-secondary p-6 rounded-lg shadow-lg max-w-sm w-full">
+            <h3 className="text-lg font-medium text-text mb-4">Confirm Logout</h3>
+            <p className="text-text/70 mb-6">Are you sure you want to log out?</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelLogout}
+                className="px-4 py-2 border border-primary/20 rounded text-text hover:bg-primary/10 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-primary text-white rounded hover:bg-opacity-90 cursor-pointer"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </header>
   );

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {Link, useNavigate} from 'react-router-dom';
 import { app } from '../services/firebase';
 import { getUserByFirebaseId, createUser } from '../services/userServices';
 import {
@@ -9,6 +9,7 @@ import {
   GoogleAuthProvider,
   signInWithPopup
 } from 'firebase/auth';
+import { useToast } from "../context/ToastContext.jsx"
 import { useScrollToTop } from "../hooks/useScrollToTop.js";
 import { FcGoogle } from 'react-icons/fc';
 
@@ -26,7 +27,7 @@ const AuthForm = ({ mode = 'login' }) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const isLogin = mode === 'login';
-
+  const toast = useToast();
   useScrollToTop();
 
   const handleChange = (e) => {
@@ -63,16 +64,29 @@ const AuthForm = ({ mode = 'login' }) => {
           username: formData.username,
           login_method: "email"
         });
+        toast.success('Account created successfully!');
       }
 
       if (isLogin) {
         await getUserByFirebaseId(userCredential.user.uid);
+        toast.success('Successfully logged in!');
       }
 
       navigate('/dashboard');
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'Authentication failed');
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        toast.error('Invalid email or password');
+      } else if (err.code === 'auth/email-already-in-use') {
+        toast.error('Email is already in use');
+      } else if (err.code === 'auth/weak-password') {
+        toast.error('Password is too weak');
+      } else if (err.code === 'auth/invalid-email') {
+        toast.error('Invalid email format');
+      } else if (err.code === 'auth/network-request-failed') {
+        toast.error('Network error. Please check your connection');
+      } else {
+        toast.error(err.message || 'Authentication failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -88,6 +102,7 @@ const AuthForm = ({ mode = 'login' }) => {
 
       try {
         await getUserByFirebaseId(user.uid);
+        toast.success('Successfully logged in!');
       } catch (backendErr) {
         if (backendErr.response?.status === 404) {
           await createUser({
@@ -96,6 +111,7 @@ const AuthForm = ({ mode = 'login' }) => {
             username: user.displayName || '',
             login_method: "google"
           });
+          toast.success('Account created successfully with Google!');
         } else {
           throw backendErr;
         }
@@ -103,8 +119,15 @@ const AuthForm = ({ mode = 'login' }) => {
 
       navigate('/dashboard');
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'Google sign in failed');
+      if (err.code === 'auth/popup-closed-by-user') {
+        toast.info('Sign-in canceled');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // This is usually just noise, no need to show error
+      } else if (err.code === 'auth/network-request-failed') {
+        toast.error('Network error. Please check your connection');
+      } else {
+        toast.error(err.message || 'Google sign in failed');
+      }
     } finally {
       setLoading(false);
     }
@@ -191,7 +214,9 @@ const AuthForm = ({ mode = 'login' }) => {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-opacity-90 transition-colors disabled:opacity-50"
+            className="
+            w-full bg-primary text-white py-2 px-4 rounded-md hover:bg-opacity-90
+            transition-colors disabled:opacity-50 cursor-pointer"
           >
             {loading ? 'Processing...' : isLogin ? 'Login' : 'Sign Up'}
           </button>
@@ -211,7 +236,9 @@ const AuthForm = ({ mode = 'login' }) => {
             type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
-            className="mt-4 w-full flex items-center justify-center gap-2 bg-white text-gray-800 py-2 px-4 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="
+            mt-4 w-full flex items-center justify-center gap-2 bg-white text-gray-800 py-2 px-4
+            border border-gray-300 rounded-md hover:bg-gray-50 transition-colors disabled:opacity-50 cursor-pointer"
           >
             <FcGoogle size={18} />
             {isLogin ? 'Sign in with Google' : 'Sign up with Google'}
@@ -222,16 +249,16 @@ const AuthForm = ({ mode = 'login' }) => {
           {isLogin ? (
             <>
               Don't have an account?{' '}
-              <a href="/signup" className="text-primary hover:underline">
+              <Link to="/signup" className="text-primary hover:underline">
                 Sign up
-              </a>
+              </Link>
             </>
           ) : (
             <>
               Already have an account?{' '}
-              <a href="/login" className="text-primary hover:underline">
+              <Link to="/login" className="text-primary hover:underline">
                 Login
-              </a>
+              </Link>
             </>
           )}
         </div>

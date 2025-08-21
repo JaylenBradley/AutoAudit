@@ -3,7 +3,7 @@ import Toast from './Toast';
 
 const ToastContainer = ({ toasts, removeToast }) => {
   return createPortal(
-    <div className="fixed top-4 right-4 z-50 flex flex-col space-y-2">
+    <div className="fixed top-4 right-4 z-50 space-y-4 max-w-md w-full flex flex-col items-end">
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
@@ -11,7 +11,7 @@ const ToastContainer = ({ toasts, removeToast }) => {
           message={toast.message}
           type={toast.type}
           onClose={removeToast}
-          duration={toast.duration || 6000} // Default 6 seconds, can be customized per toast
+          duration={toast.duration || 3000}
         />
       ))}
     </div>,

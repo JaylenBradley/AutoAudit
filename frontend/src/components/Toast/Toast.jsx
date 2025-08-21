@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { IoClose } from 'react-icons/io5';
 
-const Toast = ({ id, message, type = 'info', onClose, duration = 6000 }) => {
+const Toast = ({ id, message, type = 'info', onClose, duration = 3000 }) => {
   const [progress, setProgress] = useState(100);
   const [intervalId, setIntervalId] = useState(null);
 
