@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import { format, parseISO } from 'date-fns';
 import { FiFileText } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
+import { getLabel } from '../../utils/helpers.js'
+import { CATEGORIES } from '../../utils/options';
 
 const ExpenseTable = ({
   expenses = [],
@@ -9,6 +12,10 @@ const ExpenseTable = ({
   users = [],
   linkToAll = true
 }) => {
+  const { currentUser } = useAuth();
+
+  const showEmployeeColumn = showEmployee && currentUser.role !== 'employee';
+
   return (
     <div className="bg-secondary p-6 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-4">
@@ -17,13 +24,12 @@ const ExpenseTable = ({
           <Link to="/expenses" className="text-primary hover:underline text-sm">View All</Link>
         )}
       </div>
-
       {expenses.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
               <tr className="bg-background text-text/70">
-                {showEmployee && (
+                {showEmployeeColumn && (
                   <th className="p-3 text-left text-sm font-medium">Employee</th>
                 )}
                 <th className="p-3 text-left text-sm font-medium">Category</th>
@@ -36,23 +42,23 @@ const ExpenseTable = ({
             <tbody className="divide-y divide-primary/10">
               {expenses.slice(0, limit).map(expense => (
                 <tr key={expense.id} className="hover:bg-background/50">
-                  {showEmployee && (
+                  {showEmployeeColumn && (
                     <td className="p-3 text-sm">
                       {users.find(u => u.id === expense.user_id)?.name || 'Unknown'}
                     </td>
                   )}
-                  <td className="p-3 text-sm">{expense.category}</td>
+                  <td className="p-3 text-sm">{getLabel(CATEGORIES, expense.category)}</td>
                   <td className="p-3 text-sm">${expense.amount.toFixed(2)}</td>
                   <td className="p-3 text-sm">
                     {format(parseISO(expense.created_at), 'MMM dd, yyyy')}
                   </td>
                   <td className="p-3 text-sm">
                     <span className={`px-2 py-1 rounded text-xs ${
-                      expense.flagged 
+                      expense.is_flagged 
                         ? 'bg-red-100 text-red-800' 
                         : 'bg-green-100 text-green-800'
                     }`}>
-                      {expense.flagged ? 'Flagged' : 'Approved'}
+                      {expense.is_flagged ? 'Flagged' : 'Approved'}
                     </span>
                   </td>
                   <td className="p-3 text-sm">
@@ -70,8 +76,8 @@ const ExpenseTable = ({
         </div>
       ) : (
         <div className="text-center py-6 text-text/60">
-          {showEmployee ? 'No expenses found for the selected filters' : 'You haven\'t submitted any expenses yet'}
-          {!showEmployee && (
+          {showEmployeeColumn ? 'No expenses found for the selected filters' : 'You haven\'t submitted any expenses yet'}
+          {!showEmployeeColumn && (
             <div className="mt-2">
               <Link
                 to="/expenses/create"

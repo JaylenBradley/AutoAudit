@@ -1,36 +1,26 @@
-import { useState } from 'react';
-import { FiFilter, FiX } from 'react-icons/fi';
+import { useAuth } from '../../context/AuthContext';
+import { useExpenseDashboard } from '../../hooks/useExpenseDashboard';
 import ExpenseTrendChart from '../charts/ExpenseTrendChart';
 import ExpenseCategoryChart from '../charts/ExpenseCategoryChart';
+import { FiFilter, FiX } from 'react-icons/fi';
 
 const ExpenseAnalytics = ({
-  timeRange,
-  setTimeRange,
-  customStartDate,
-  setCustomStartDate,
-  customEndDate,
-  setCustomEndDate,
-  timeSeriesData,
-  categoryData,
+  expenses = [],
+  companyUsers = [],
   showFilters = false,
   setShowFilters = () => {},
-  companyUsers = [],
-  categories = [],
-  selectedUsers = [],
-  toggleUserSelection = () => {},
-  selectedCategories = [],
-  toggleCategorySelection = () => {},
-  clearFilters = () => {}
 }) => {
+  const { currentUser } = useAuth();
+  const dashboard = useExpenseDashboard(expenses, companyUsers);
+
   return (
     <div className="bg-secondary p-6 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-text">Expense Analytics</h2>
-
         <div className="flex space-x-2">
           <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
+            value={dashboard.timeRange}
+            onChange={(e) => dashboard.setTimeRange(e.target.value)}
             className="p-2 border border-primary/20 rounded bg-transparent text-text text-sm"
           >
             <option value="week">Last Week</option>
@@ -39,8 +29,7 @@ const ExpenseAnalytics = ({
             <option value="year">Last Year</option>
             <option value="custom">Custom Range</option>
           </select>
-
-          {companyUsers.length > 0 && (
+          {companyUsers.length > 0 && currentUser.role !== 'employee' && (
             <button
               onClick={() => setShowFilters(!showFilters)}
               className="p-2 border border-primary/20 rounded bg-transparent text-text flex items-center"
@@ -51,14 +40,14 @@ const ExpenseAnalytics = ({
         </div>
       </div>
 
-      {timeRange === 'custom' && (
+      {dashboard.timeRange === 'custom' && (
         <div className="flex space-x-4 mb-4">
           <div>
             <label className="block text-sm text-text/60 mb-1">Start Date</label>
             <input
               type="date"
-              value={customStartDate}
-              onChange={(e) => setCustomStartDate(e.target.value)}
+              value={dashboard.customStartDate}
+              onChange={(e) => dashboard.setCustomStartDate(e.target.value)}
               className="p-2 border border-primary/20 rounded bg-transparent text-text"
             />
           </div>
@@ -66,23 +55,22 @@ const ExpenseAnalytics = ({
             <label className="block text-sm text-text/60 mb-1">End Date</label>
             <input
               type="date"
-              value={customEndDate}
-              onChange={(e) => setCustomEndDate(e.target.value)}
+              value={dashboard.customEndDate}
+              onChange={(e) => dashboard.setCustomEndDate(e.target.value)}
               className="p-2 border border-primary/20 rounded bg-transparent text-text"
             />
           </div>
         </div>
       )}
 
-      {showFilters && companyUsers.length > 0 && (
+      {showFilters && companyUsers.length > 0 && currentUser.role !== 'employee' && (
         <div className="mb-6 p-4 border border-primary/20 rounded bg-background">
           <div className="flex justify-between mb-2">
             <h3 className="font-medium text-text">Filters</h3>
-            <button onClick={clearFilters} className="text-sm text-primary flex items-center">
+            <button onClick={dashboard.clearFilters} className="text-sm text-primary flex items-center">
               <FiX className="mr-1" /> Clear All
             </button>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <h4 className="text-sm font-medium text-text/60 mb-2">Users</h4>
@@ -92,8 +80,8 @@ const ExpenseAnalytics = ({
                     <input
                       type="checkbox"
                       id={`user-${user.id}`}
-                      checked={selectedUsers.includes(user.id)}
-                      onChange={() => toggleUserSelection(user.id)}
+                      checked={dashboard.selectedUsers.includes(user.id)}
+                      onChange={() => dashboard.toggleUserSelection(user.id)}
                       className="mr-2"
                     />
                     <label htmlFor={`user-${user.id}`} className="text-sm text-text">
@@ -103,17 +91,16 @@ const ExpenseAnalytics = ({
                 ))}
               </div>
             </div>
-
             <div>
               <h4 className="text-sm font-medium text-text/60 mb-2">Categories</h4>
               <div className="space-y-1 max-h-40 overflow-y-auto">
-                {categories.map(category => (
+                {dashboard.categories.map(category => (
                   <div key={category} className="flex items-center">
                     <input
                       type="checkbox"
                       id={`category-${category}`}
-                      checked={selectedCategories.includes(category)}
-                      onChange={() => toggleCategorySelection(category)}
+                      checked={dashboard.selectedCategories.includes(category)}
+                      onChange={() => dashboard.toggleCategorySelection(category)}
                       className="mr-2"
                     />
                     <label htmlFor={`category-${category}`} className="text-sm text-text">
@@ -130,12 +117,11 @@ const ExpenseAnalytics = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="h-80">
           <h3 className="text-center text-sm font-medium text-text/60 mb-4">Expense Trend</h3>
-          <ExpenseTrendChart data={timeSeriesData} height="90%" />
+          <ExpenseTrendChart data={dashboard.timeSeriesData} height="90%" />
         </div>
-
         <div className="h-80">
           <h3 className="text-center text-sm font-medium text-text/60 mb-4">Expenses by Category</h3>
-          <ExpenseCategoryChart data={categoryData} height="90%" />
+          <ExpenseCategoryChart data={dashboard.categoryData} height="90%" />
         </div>
       </div>
     </div>

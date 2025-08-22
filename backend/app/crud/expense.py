@@ -125,10 +125,15 @@ def check_expense_against_policies(expense_data, policies):
         rule_type = policy.rule_type
         rule_value = policy.rule_value
 
-        if rule_type == "amount_max" and expense_data["amount"] > rule_value:
-            is_flagged = True
-            flag_reason = f"Amount exceeds maximum of {rule_value}"
-            is_approved = False if policy.policy_type == "hard" else None
+        if rule_type == "amount_max":
+            try:
+                max_value = float(rule_value)
+            except (TypeError, ValueError):
+                continue
+            if expense_data["amount"] > max_value:
+                is_flagged = True
+                flag_reason = f"Amount exceeds maximum of {max_value}"
+                is_approved = False if policy.policy_type == "hard" else None
 
         elif rule_type == "merchant_blacklist" and expense_data["merchant"].lower() in [m.lower() for m in rule_value]:
             is_flagged = True

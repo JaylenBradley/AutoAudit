@@ -47,7 +47,11 @@ const CompanyPolicies = ({
                   {policy.category}
                 </span>
                 <span className="text-xs text-text/60">
-                  Limit: ${policy.amount_limit?.toFixed(2) || 'N/A'}
+                  Restriction: {
+                    !isNaN(Number(policy.rule_value))
+                      ? `$${Number(policy.rule_value).toFixed(2)}`
+                      : policy.rule_value || "N/A"
+                  }
                 </span>
               </div>
             </div>

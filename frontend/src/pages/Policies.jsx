@@ -27,7 +27,13 @@ const Policies = () => {
               <li key={policy.id} className="mb-4 border-b border-primary/10 pb-2">
                 <Link to={`/policies/${policy.id}`} className="text-primary font-semibold hover:underline">{policy.name}</Link>
                 <div className="text-sm text-text/70">{policy.description}</div>
-                <div className="text-xs text-text/60">Category: {policy.category} | Limit: ${policy.amount_limit?.toFixed(2) || 'N/A'}</div>
+                <div className="text-xs text-text/60">
+                  Category: {policy.category} | Restriction: {
+                    !isNaN(Number(policy.rule_value))
+                      ? `$${Number(policy.rule_value).toFixed(2)}`
+                      : policy.rule_value || "N/A"
+                  }
+                </div>
               </li>
             ))}
           </ul>

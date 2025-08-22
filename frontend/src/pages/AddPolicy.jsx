@@ -3,27 +3,7 @@ import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useScrollToTop } from "../hooks/useScrollToTop.js";
 import { useQueryClient } from '@tanstack/react-query';
-
-const CATEGORIES = [
-  "general",
-  "travel",
-  "food",
-  "lodging",
-  "transportation",
-  "supplies",
-  "other"
-];
-
-const RULE_TYPES = [
-  { value: "amount_max", label: "Amount Max" },
-  { value: "merchant_blacklist", label: "Merchant Blacklist" },
-  { value: "item_type", label: "Item Type" },
-];
-
-const POLICY_TYPES = [
-  { value: "hard", label: "Hard" },
-  { value: "soft", label: "Soft" }
-];
+import { CATEGORIES, RULE_TYPES, POLICY_TYPES } from "../utils/options.js";
 
 const AddPolicy = () => {
   const toast = useToast();

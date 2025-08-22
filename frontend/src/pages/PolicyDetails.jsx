@@ -5,13 +5,11 @@ import { useToast } from '../context/ToastContext';
 import { useQueryClient } from '@tanstack/react-query';
 import { useScrollToTop } from "../hooks/useScrollToTop.js";
 import { Link } from 'react-router-dom';
-import Spinner from '../components/Spinner';
 import { FiArrowLeft } from 'react-icons/fi';
-
-const POLICY_TYPES = [
-  { value: "hard", label: "Hard" },
-  { value: "soft", label: "Soft" }
-];
+import { RULE_TYPES, POLICY_TYPES } from "../utils/options.js";
+import { getLabel } from "../utils/helpers.js";
+import PolicyEditForm from "../components/PolicyEditForm.jsx";
+import Spinner from '../components/Spinner';
 
 const PolicyDetails = () => {
   const { id } = useParams();
@@ -38,6 +36,7 @@ const PolicyDetails = () => {
     },
     onError: (err) => toast.error(err.message)
   });
+
   useScrollToTop();
 
   const [editMode, setEditMode] = useState(false);
@@ -66,23 +65,9 @@ const PolicyDetails = () => {
   const handleEdit = () => setEditMode(true);
   const handleCancel = () => setEditMode(false);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleUpdate = (e) => {
-    e.preventDefault();
-    updatePolicy({
-      id,
-      policyData: { ...formData }
-    });
-    setEditMode(false);
-  };
-
   if (isLoading) return <Spinner size="lg" />;
-  if (error) return <div className="text-red-500">Failed to load policy.</div>;
-  if (!policy) return <div>Policy not found.</div>;
+  if (error) return <div className="text-red-500">Failed to load policy</div>;
+  if (!policy) return <div>Policy not found</div>;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -99,35 +84,27 @@ const PolicyDetails = () => {
       </div>
       <div className="bg-secondary p-6 rounded-lg shadow-sm space-y-2">
         {editMode ? (
-          <form onSubmit={handleUpdate} className="space-y-3">
-            <input name="name" value={formData.name} onChange={handleChange} required className="w-full mb-2 p-2 rounded-lg border border-primary/50"/>
-            <input name="category" value={formData.category} onChange={handleChange} required className="w-full mb-2 p-2 rounded-lg border border-primary/50" />
-            <input name="rule_type" value={formData.rule_type} onChange={handleChange} required className="w-full mb-2 p-2 rounded-lg border border-primary/50" />
-            <input name="rule_value" value={formData.rule_value} onChange={handleChange} required className="w-full mb-2 p-2 rounded-lg border border-primary/50" />
-            <select name="policy_type" value={formData.policy_type} onChange={handleChange} required className="w-full mb-2 p-2 rounded-lg border border-primary/50">
-              <option value="">Select Policy Type</option>
-              {POLICY_TYPES.map(type => (
-                <option key={type.value} value={type.value}>{type.label}</option>
-              ))}
-            </select>
-            <textarea name="description" value={formData.description} onChange={handleChange} className="w-full mb-2 p-2 rounded-lg border border-primary/50"/>
-            <div>
-              <button type="submit" disabled={updating} className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 mr-2 cursor-pointer">
-                {updating ? 'Updating...' : 'Save'}
-              </button>
-              <button type="button" onClick={handleCancel} className="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-800 cursor-pointer">
-                Cancel
-              </button>
-            </div>
-          </form>
+          <PolicyEditForm
+            formData={formData}
+            onSubmit={(data) => {
+              updatePolicy({ id, policyData: data });
+              setEditMode(false);
+            }}
+            onCancel={handleCancel}
+            updating={updating}
+          />
         ) : (
           <>
             <div className="text-text"><strong>Name:</strong> {policy.name}</div>
             <div className="text-text"><strong>Description:</strong> {policy.description}</div>
             <div className="text-text"><strong>Category:</strong> {policy.category}</div>
-            <div className="text-text"><strong>Rule Type:</strong> {policy.rule_type}</div>
+            <div className="text-text">
+              <strong>Rule Type:</strong> {getLabel(RULE_TYPES, policy.rule_type)}
+            </div>
             <div className="text-text"><strong>Rule Value:</strong> {policy.rule_value}</div>
-            <div className="text-text"><strong>Policy Type:</strong> {policy.policy_type}</div>
+            <div className="text-text">
+              <strong>Policy Type:</strong> {getLabel(POLICY_TYPES, policy.policy_type)}
+            </div>
             <button
               onClick={handleEdit}
               className="mt-4 bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 mr-2 transition-colors cursor-pointer"

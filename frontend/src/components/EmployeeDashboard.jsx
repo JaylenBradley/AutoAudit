@@ -53,20 +53,9 @@ const EmployeeDashboard = ({
       </div>
 
       <ExpenseAnalytics
-        timeRange={dashboard.timeRange}
-        setTimeRange={dashboard.setTimeRange}
-        customStartDate={dashboard.customStartDate}
-        setCustomStartDate={dashboard.setCustomStartDate}
-        customEndDate={dashboard.customEndDate}
-        setCustomEndDate={dashboard.setCustomEndDate}
-        timeSeriesData={dashboard.timeSeriesData}
-        categoryData={dashboard.categoryData}
+        expenses={expenses}
         showFilters={dashboard.showFilters}
         setShowFilters={dashboard.setShowFilters}
-        categories={dashboard.categories}
-        selectedCategories={dashboard.selectedCategories}
-        toggleCategorySelection={dashboard.toggleCategorySelection}
-        clearFilters={dashboard.clearFilters}
       />
 
       <ExpenseTable
