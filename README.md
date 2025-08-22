@@ -2,7 +2,7 @@
 
 AutoAudit is an AI-powered financial operations platform that automates expense management and policy enforcement. 
 It uses AI to categorize expenses, flag policy violations, and provide real-time financial insights. 
-This project serves as a Minimum Viable Product (MVP) to demonstrate key features of a modern FinTech platform, but has plans for continued improvements.
+This project serves as a Minimum Viable Product (MVP) to demonstrate key features of a modern FinTech platform, but has plans for continued improvements
 
 ## Features
 - User authentication and profile management
