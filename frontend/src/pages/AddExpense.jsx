@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext';
 import { useNavigate } from 'react-router-dom';
 import { useScrollToTop } from "../hooks/useScrollToTop.js";
 import { useState } from 'react';
+import { useQueryClient } from "@tanstack/react-query";
 import { CATEGORIES } from "../utils/options.js";
 import CalendarInput from "../components/CalendarInput.jsx";
 import DatePicker from 'react-datepicker';
@@ -15,9 +16,14 @@ const AddExpense = () => {
   const { currentUser } = useAuth();
   const toast = useToast();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { mutate: createExpense, isLoading } = useCreateExpense({
     onSuccess: () => {
+      if (currentUser.role === 'admin' || currentUser.role === 'manager') {
+        queryClient.invalidateQueries({queryKey: ['expenses']});
+      }
+      queryClient.invalidateQueries({ queryKey: ['user', currentUser.id, 'expenses'] });
       toast.success('Expense added!');
       navigate('/expenses');
     },
@@ -69,7 +75,20 @@ const AddExpense = () => {
   const canBulkUpload = currentUser.role === 'admin' || currentUser.role === 'manager';
 
   return (
+
     <div className="max-w-lg mx-auto p-6 bg-secondary rounded-lg">
+      {canBulkUpload && (
+        <>
+          <form onSubmit={handleCsvUpload} className="space-y-2">
+            <label className="block text-text font-medium mb-2" htmlFor="csv-upload">Bulk CSV Upload</label>
+            <input id="csv-upload" type="file" accept=".csv" onChange={e => setCsvFile(e.target.files[0])} className="w-full mb-2"/>
+            <button type="submit" disabled={bulkLoading || !csvFile} className="bg-primary text-text px-4 py-2 hover:bg-primary/80 rounded-lg border border-primary/30 cursor-pointer">
+              {bulkLoading ? "Uploading..." : "Upload CSV"}
+            </button>
+          </form>
+          <hr className="my-6 text-text"/>
+        </>
+      )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label className="block text-text font-medium mb-2" htmlFor="merchant">Merchant *</label>
@@ -144,18 +163,6 @@ const AddExpense = () => {
           Add Expense
         </button>
       </form>
-      {canBulkUpload && (
-        <>
-          <hr className="my-6"/>
-          <form onSubmit={handleCsvUpload} className="space-y-2">
-            <label className="block text-text font-medium mb-2" htmlFor="csv-upload">Bulk CSV Upload</label>
-            <input id="csv-upload" type="file" accept=".csv" onChange={e => setCsvFile(e.target.files[0])} className="w-full mb-2"/>
-            <button type="submit" disabled={bulkLoading || !csvFile} className="bg-primary text-text px-4 py-2 rounded-lg border border-primary/30 cursor-pointer">
-              {bulkLoading ? "Uploading..." : "Upload CSV"}
-            </button>
-          </form>
-        </>
-      )}
     </div>
   );
 };

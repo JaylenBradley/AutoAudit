@@ -31,7 +31,7 @@ const Expenses = () => {
       <div className="bg-secondary p-6 rounded-lg shadow-sm">
         <table className="min-w-full">
           <thead>
-            <tr className="bg-background text-text/70">
+            <tr className="bg-background text-text">
               <th className="p-3 text-left text-sm font-medium">Merchant</th>
               <th className="p-3 text-left text-sm font-medium">Amount</th>
               <th className="p-3 text-left text-sm font-medium">Category</th>
@@ -40,7 +40,7 @@ const Expenses = () => {
               <th className="p-3 text-left text-sm font-medium">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-primary/10">
+          <tbody className="divide-y divide-primary/10 text-text">
             {expenses.map(expense => (
               <tr key={expense.id} className="hover:bg-background/50">
                 <td className="p-3 text-sm">{expense.merchant}</td>

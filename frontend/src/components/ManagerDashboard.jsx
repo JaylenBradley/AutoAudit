@@ -41,23 +41,9 @@ const ManagerDashboard = ({
       </div>
 
       <ExpenseAnalytics
-        timeRange={dashboard.timeRange}
-        setTimeRange={dashboard.setTimeRange}
-        customStartDate={dashboard.customStartDate}
-        setCustomStartDate={dashboard.setCustomStartDate}
-        customEndDate={dashboard.customEndDate}
-        setCustomEndDate={dashboard.setCustomEndDate}
-        timeSeriesData={dashboard.timeSeriesData}
-        categoryData={dashboard.categoryData}
+        expenses={companyExpenses}
         showFilters={dashboard.showFilters}
         setShowFilters={dashboard.setShowFilters}
-        companyUsers={companyUsers}
-        categories={dashboard.categories}
-        selectedUsers={dashboard.selectedUsers}
-        toggleUserSelection={dashboard.toggleUserSelection}
-        selectedCategories={dashboard.selectedCategories}
-        toggleCategorySelection={dashboard.toggleCategorySelection}
-        clearFilters={dashboard.clearFilters}
       />
 
       <ExpenseTable

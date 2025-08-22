@@ -28,7 +28,7 @@ const ExpenseTable = ({
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
-              <tr className="bg-background text-text/70">
+              <tr className="bg-background text-text">
                 {showEmployeeColumn && (
                   <th className="p-3 text-left text-sm font-medium">Employee</th>
                 )}
@@ -39,12 +39,12 @@ const ExpenseTable = ({
                 <th className="p-3 text-left text-sm font-medium">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-primary/10">
+            <tbody className="divide-y divide-primary/10 text-text">
               {expenses.slice(0, limit).map(expense => (
                 <tr key={expense.id} className="hover:bg-background/50">
                   {showEmployeeColumn && (
                     <td className="p-3 text-sm">
-                      {users.find(u => u.id === expense.user_id)?.name || 'Unknown'}
+                      {users.find(u => u.id === expense.user_id)?.username || 'Unknown'}
                     </td>
                   )}
                   <td className="p-3 text-sm">{getLabel(CATEGORIES, expense.category)}</td>
@@ -66,7 +66,7 @@ const ExpenseTable = ({
                       to={`/expenses/${expense.id}`}
                       className="text-primary hover:underline flex items-center"
                     >
-                      <FiFileText className="mr-1" /> Details
+                      Details
                     </Link>
                   </td>
                 </tr>

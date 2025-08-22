@@ -23,12 +23,23 @@ const AddPolicy = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     const form = e.target;
+    const ruleType = form.rule_type.value;
+    const ruleValue = form.rule_value.value;
+
+    if (ruleType === 'amount_max') {
+      const num = Number(ruleValue);
+      if (isNaN(num) || num < 0) {
+        toast.error('For Amount Max, the rule value must be a number greater than or equal to 0');
+        return;
+      }
+    }
+
     createPolicy({
       name: form.name.value,
       description: form.description.value,
       category: form.category.value,
-      rule_type: form.rule_type.value,
-      rule_value: form.rule_value.value,
+      rule_type: ruleType,
+      rule_value: ruleValue,
       policy_type: form.policy_type.value
     });
   };
