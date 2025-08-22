@@ -247,7 +247,7 @@ const UserProfile = () => {
           <button
             type="submit"
             disabled={updateLoading}
-            className="bg-primary text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors disabled:opacity-50 cursor-pointer"
+            className="bg-primary text-white px-4 py-2 rounded-lg hover:bg-primary/80 transition-colors disabled:opacity-50 cursor-pointer"
           >
             {updateLoading ? 'Updating...' : 'Update Profile'}
           </button>

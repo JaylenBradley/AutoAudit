@@ -16,6 +16,10 @@ const ExpenseTable = ({
 
   const showEmployeeColumn = showEmployee && currentUser.role !== 'employee';
 
+  const sortedExpenses = [...expenses].sort(
+    (a, b) => new Date(b.date) - new Date(a.date)
+  );
+
   return (
     <div className="bg-secondary p-6 rounded-lg shadow-sm">
       <div className="flex justify-between items-center mb-4">
@@ -24,7 +28,7 @@ const ExpenseTable = ({
           <Link to="/expenses" className="text-primary hover:underline text-sm">View All</Link>
         )}
       </div>
-      {expenses.length > 0 ? (
+      {sortedExpenses.length > 0 ? (
         <div className="overflow-x-auto">
           <table className="min-w-full">
             <thead>
@@ -40,7 +44,7 @@ const ExpenseTable = ({
               </tr>
             </thead>
             <tbody className="divide-y divide-primary/10 text-text">
-              {expenses.slice(0, limit).map(expense => (
+              {sortedExpenses.slice(0, limit).map(expense => (
                 <tr key={expense.id} className="hover:bg-background/50">
                   {showEmployeeColumn && (
                     <td className="p-3 text-sm">
@@ -50,7 +54,7 @@ const ExpenseTable = ({
                   <td className="p-3 text-sm">{getLabel(CATEGORIES, expense.category)}</td>
                   <td className="p-3 text-sm">${expense.amount.toFixed(2)}</td>
                   <td className="p-3 text-sm">
-                    {format(parseISO(expense.created_at), 'MMM dd, yyyy')}
+                    {format(parseISO(expense.date), 'MMM dd, yyyy')}
                   </td>
                   <td className="p-3 text-sm">
                     <span className={`px-2 py-1 rounded text-xs ${

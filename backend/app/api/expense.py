@@ -30,20 +30,8 @@ def get_db():
 
 @router.post("/expenses", response_model=ExpenseResponse)
 def create_expense_route(expense: ExpenseCreate, db: Session = Depends(get_db)):
-    expense_data = expense.dict()
-
-    # Use AI to categorize if not already specified
-    if not expense_data["category"]:
-        expense_data["category"] = categorize_expense(expense_data)
-
     policies = get_policies(db)
-    is_flagged, flag_reason, is_approved = check_expense_against_policies(expense_data, policies)
-
-    expense_data["is_flagged"] = is_flagged
-    expense_data["flag_reason"] = flag_reason
-    expense_data["is_approved"] = not is_flagged if is_approved is None else is_approved
-
-    return create_expense(db, ExpenseCreate(**expense_data))
+    return create_expense(db, expense, policies=policies, categorize_func=categorize_expense)
 
 @router.get("/expenses", response_model=List[ExpenseResponse])
 def get_expenses_route(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

@@ -8,7 +8,7 @@ import { Link } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 import { RULE_TYPES, POLICY_TYPES } from "../utils/options.js";
 import { getLabel } from "../utils/helpers.js";
-import PolicyEditForm from "../components/PolicyEditForm.jsx";
+import PolicyUpdateForm from "../components/PolicyUpdateForm.jsx";
 import Spinner from '../components/Spinner';
 
 const PolicyDetails = () => {
@@ -84,7 +84,7 @@ const PolicyDetails = () => {
       </div>
       <div className="bg-secondary p-6 rounded-lg shadow-sm space-y-2">
         {editMode ? (
-          <PolicyEditForm
+          <PolicyUpdateForm
             formData={formData}
             onSubmit={(data) => {
               updatePolicy({ id, policyData: data });
@@ -112,7 +112,11 @@ const PolicyDetails = () => {
               Edit Policy
             </button>
             <button
-              onClick={() => deletePolicy(id)}
+              onClick={() => {
+                if (window.confirm("Are you sure you want to delete this expense?")) {
+                  deletePolicy(id);
+                }
+              }}
               disabled={deleting}
               className="mt-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-800 transition-colors cursor-pointer"
             >

@@ -5,8 +5,19 @@ from app.models import Expense
 from app.schemas.expense import ExpenseCreate, ExpenseUpdate
 from datetime import datetime
 
-def create_expense(db: Session, expense: ExpenseCreate):
-    db_expense = Expense(**expense.dict())
+def create_expense(db: Session, expense: ExpenseCreate, policies=None, categorize_func=None):
+    expense_data = expense.dict()
+
+    if not expense_data.get("category") and categorize_func:
+        expense_data["category"] = categorize_func(expense_data)
+
+    if policies:
+        is_flagged, flag_reason, is_approved = check_expense_against_policies(expense_data, policies)
+        expense_data["is_flagged"] = is_flagged
+        expense_data["flag_reason"] = flag_reason
+        expense_data["is_approved"] = not is_flagged if is_approved is None else is_approved
+
+    db_expense = Expense(**expense_data)
     db.add(db_expense)
     db.commit()
     db.refresh(db_expense)

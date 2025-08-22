@@ -25,7 +25,7 @@ export function useExpenseDashboard(expenses = [], users = []) {
         if (customStartDate && customEndDate) {
           setFilteredExpenses(
             expenses.filter(exp => {
-              const d = parseISO(exp.created_at);
+              const d = parseISO(exp.date);
               return isAfter(d, parseISO(customStartDate)) && !isAfter(d, parseISO(customEndDate));
             })
           );
@@ -35,7 +35,7 @@ export function useExpenseDashboard(expenses = [], users = []) {
       default: cutoffDate = subMonths(new Date(), 1);
     }
 
-    let filtered = expenses.filter(exp => isAfter(parseISO(exp.created_at), cutoffDate));
+    let filtered = expenses.filter(exp => isAfter(parseISO(exp.date), cutoffDate));
     if (selectedUsers.length > 0) filtered = filtered.filter(exp => selectedUsers.includes(exp.user_id));
     if (selectedCategories.length > 0) filtered = filtered.filter(exp => selectedCategories.includes(exp.category));
     setFilteredExpenses(filtered);
@@ -49,18 +49,26 @@ export function useExpenseDashboard(expenses = [], users = []) {
   const getTimeSeriesData = () => {
     const data = [];
     const expenseMap = new Map();
+
     filteredExpenses.forEach(exp => {
-      const date = format(parseISO(exp.created_at),
-        timeRange === 'week' ? 'EEE' :
-        timeRange === 'month' ? 'dd' :
-        timeRange === 'quarter' ? 'MMM' : 'MMM yy'
-      );
-      expenseMap.set(date, (expenseMap.get(date) || 0) + exp.amount);
+      const d = parseISO(exp.date);
+      let key;
+
+      if (timeRange === 'week' || timeRange === 'month') {
+        key = exp.date;
+      } else if (timeRange === 'quarter') {
+        key = format(d, 'yyyy-MM-01');
+      } else if (timeRange === 'year') {
+        key = format(d, 'yyyy');
+      }
+
+      expenseMap.set(key, (expenseMap.get(key) || 0) + exp.amount);
     });
+
     expenseMap.forEach((value, key) => data.push({ date: key, amount: value }));
-    return data.sort((a, b) => timeRange === 'week'
-      ? ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(a.date) - ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].indexOf(b.date)
-      : a.date.localeCompare(b.date));
+
+    // Sort by date
+    return data.sort((a, b) => new Date(a.date) - new Date(b.date));
   };
 
   return {

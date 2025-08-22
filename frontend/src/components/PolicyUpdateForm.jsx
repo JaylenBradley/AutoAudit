@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { CATEGORIES, RULE_TYPES, POLICY_TYPES } from "../utils/options.js";
 
-const PolicyEditForm = ({
+const PolicyUpdateForm = ({
   formData,
   onSubmit,
   onCancel,
@@ -33,7 +33,7 @@ const PolicyEditForm = ({
         <label className="block text-text font-medium mb-1">Category:</label>
         <select name="category" value={localFormData.category} onChange={handleChange} required className="w-full mb-2 p-2 rounded-lg border border-primary/50">
           {CATEGORIES.map(cat => (
-            <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
+            <option key={cat.value} value={cat.value}>{cat.label}</option>
           ))}
         </select>
       </div>
@@ -78,4 +78,4 @@ const PolicyEditForm = ({
   );
 };
 
-export default PolicyEditForm;
+export default PolicyUpdateForm;

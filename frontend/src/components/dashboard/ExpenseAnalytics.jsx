@@ -21,7 +21,7 @@ const ExpenseAnalytics = ({
           <select
             value={dashboard.timeRange}
             onChange={(e) => dashboard.setTimeRange(e.target.value)}
-            className="p-2 border border-primary/20 rounded bg-transparent text-text text-sm"
+            className="p-2 border border-primary/20 rounded bg-transparent text-text text-sm cursor-pointer"
           >
             <option value="week">Last Week</option>
             <option value="month">Last Month</option>
@@ -117,7 +117,11 @@ const ExpenseAnalytics = ({
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="h-80">
           <h3 className="text-center text-sm font-medium text-text/60 mb-4">Expense Trend</h3>
-          <ExpenseTrendChart data={dashboard.timeSeriesData} height="90%" />
+          <ExpenseTrendChart
+              data={dashboard.timeSeriesData}
+              timeRange={dashboard.timeRange}
+              height="90%"
+          />
         </div>
         <div className="h-80">
           <h3 className="text-center text-sm font-medium text-text/60 mb-4">Expenses by Category</h3>

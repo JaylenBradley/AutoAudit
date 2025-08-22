@@ -121,10 +121,10 @@ const AddExpense = () => {
               setSelectedDate(date);
               setDateError('');
             }}
-            dateFormat="yyyy-MM-dd"
+            dateFormat="MMM-dd-yyyy"
             customInput={<CalendarInput placeholder="Select date" />}
             minDate={new Date(1900, 0, 1)}
-            maxDate={new Date(2100, 11, 31)}
+            maxDate={new Date()}
             filterDate={date => {
               const year = date.getFullYear();
               return year >= 1900 && year <= 2100;

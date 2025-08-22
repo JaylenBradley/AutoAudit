@@ -21,7 +21,7 @@ const EmployeeDashboard = ({
           <h2 className="text-xl font-semibold text-text">Your Expenses Overview</h2>
           <Link
             to="/expenses/create"
-            className="bg-primary text-white px-3 py-1 rounded text-sm flex items-center hover:bg-opacity-90"
+            className="bg-primary text-white px-3 py-1 rounded text-sm flex items-center hover:bg-primary/80 cursor-pointer"
           >
             Add Expense
           </Link>
